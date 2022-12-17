@@ -1,0 +1,7 @@
+<launch>
+
+<node name="radii_server" pkg="server" type="server_impl.py" output="screen">
+    <param name="model_path" value="$(find server)/checkpoints/checkpoints/checkpoint0_fixed2_with_model_200000.pt"/>
+</node>
+
+</launch>

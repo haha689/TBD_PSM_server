@@ -10,35 +10,35 @@ import torch
 from attrdict import AttrDict
 from models import TrajectoryGenerator
 
-num = 4
-epoch = 200000
-model_path = "checkpoints/checkpoint%d_fixed2_with_model_%d.pt" % (num, epoch)
-checkpoint = torch.load(model_path)
-args = AttrDict(checkpoint['args'])
-generator = TrajectoryGenerator(
-        obs_len=args.obs_len,
-        pred_len=args.pred_len,
-        embedding_dim=args.embedding_dim,
-        encoder_h_dim=args.encoder_h_dim_g,
-        decoder_h_dim=args.decoder_h_dim_g,
-        mlp_dim=args.mlp_dim,
-        num_layers=args.num_layers,
-        noise_dim=args.noise_dim,
-        noise_type=args.noise_type,
-        noise_mix_type=args.noise_mix_type,
-        pooling_type=args.pooling_type,
-        pool_every_timestep=args.pool_every_timestep,
-        dropout=args.dropout,
-        bottleneck_dim=args.bottleneck_dim,
-        neighborhood_size=args.neighborhood_size,
-        grid_size=args.grid_size,
-        batch_norm=args.batch_norm)
-generator.load_state_dict(checkpoint['g_state'])
-generator.to(torch.device('cuda'))
-generator.eval()
-args.batch_size = 1
+def getModel():
+    model_path = rospy.get_param("~model_path")
+    checkpoint = torch.load(model_path)
+    args = AttrDict(checkpoint['args'])
+    generator = TrajectoryGenerator(
+            obs_len=args.obs_len,
+            pred_len=args.pred_len,
+            embedding_dim=args.embedding_dim,
+            encoder_h_dim=args.encoder_h_dim_g,
+            decoder_h_dim=args.decoder_h_dim_g,
+            mlp_dim=args.mlp_dim,
+            num_layers=args.num_layers,
+            noise_dim=args.noise_dim,
+            noise_type=args.noise_type,
+            noise_mix_type=args.noise_mix_type,
+            pooling_type=args.pooling_type,
+            pool_every_timestep=args.pool_every_timestep,
+            dropout=args.dropout,
+            bottleneck_dim=args.bottleneck_dim,
+            neighborhood_size=args.neighborhood_size,
+            grid_size=args.grid_size,
+            batch_norm=args.batch_norm)
+    generator.load_state_dict(checkpoint['g_state'])
+    generator.to(torch.device('cuda'))
+    generator.eval()
+    args.batch_size = 1
+    return generator
 
-def handle_agent_trajectories(req):
+def handle_agent_trajectories(req, generator):
     if (len(req.trajectories) == 0):
         response = Radii()
         response.radii = []
@@ -73,8 +73,9 @@ def handle_agent_trajectories(req):
     return AgentTrajectoriesResponse(response)
 
 def agent_trajectories_server():
-    rospy.init_node('agent_trajectories_server')
-    s = rospy.Service('calculate_radii', AgentTrajectories, handle_agent_trajectories)
+    rospy.init_node('radii_server')
+    generator = getModel()
+    s = rospy.Service('calculate_radii', AgentTrajectories, lambda req: handle_agent_trajectories(req, generator))
     print("Ready to calculate radii.")
     rospy.spin()
 
