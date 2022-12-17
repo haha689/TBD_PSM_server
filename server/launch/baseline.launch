@@ -1,0 +1,6 @@
+<launch>
+
+<node name="baseline_radii_server" pkg="server" type="baseline_impl.py" output="screen">
+</node>
+
+</launch>

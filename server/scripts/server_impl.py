@@ -62,7 +62,6 @@ def handle_agent_trajectories(req, generator):
         obs_traj.permute(1, 0, 2).cuda()
         obs_traj_rel.permute(1, 0, 2).cuda()
         output, _ = generator(obs_traj, obs_traj_rel, seq_start_end)
-        # placeholder
         response = []
         for i in range(num_peds):
             msg = Radius()

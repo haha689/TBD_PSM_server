@@ -17,8 +17,8 @@ def handle_agent_trajectories(req):
     return AgentTrajectoriesResponse(response)
 
 def agent_trajectories_server():
-    rospy.init_node('agent_trajectories_server')
-    s = rospy.Service('calculate_radii', AgentTrajectories, handle_agent_trajectories)
+    rospy.init_node('baseline_radii_server')
+    s = rospy.Service('calculate_radii_baseline', AgentTrajectories, handle_agent_trajectories)
     print("Ready to calculate radii.")
     rospy.spin()
 
