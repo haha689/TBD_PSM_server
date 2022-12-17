@@ -1,14 +1,15 @@
 from __future__ import print_function
 
 from psm_srvs.srv import AgentTrajectories, AgentTrajectoriesResponse
-from psm_msgs.msg import Radius, Radii
+from psm_msgs.msg import Radius
 import rospy
 import math
 import numpy as np
 import os
 import torch
 from attrdict import AttrDict
-from models import TrajectoryGenerator
+
+from server_models import TrajectoryGenerator
 
 def getModel():
     model_path = rospy.get_param("~model_path")
@@ -40,9 +41,9 @@ def getModel():
 
 def handle_agent_trajectories(req, generator):
     if (len(req.trajectories) == 0):
-        response = Radii()
+        response = AgentTrajectoriesResponse()
         response.radii = []
-        return AgentTrajectoriesResponse(response)
+        return response
     num_peds = len(req.trajectories)
     traj_len = len(req.trajectories[0].trajectory)
     with torch.no_grad():
@@ -62,14 +63,15 @@ def handle_agent_trajectories(req, generator):
         obs_traj.permute(1, 0, 2).cuda()
         obs_traj_rel.permute(1, 0, 2).cuda()
         output, _ = generator(obs_traj, obs_traj_rel, seq_start_end)
-        response = []
+        response = AgentTrajectoriesResponse()
+        response.radii = []
         for i in range(num_peds):
             msg = Radius()
-            msg.r = math.sqrt(output[robot_id][i][0] ** 2 + ouput[robot_id][i][1] ** 2))
+            msg.r = math.sqrt(output[robot_id][i][0] ** 2 + ouput[robot_id][i][1] ** 2)
             msg.id = ids[i]
-            msg.type = int(msg.id == robot_id)
-            response.append(msg)
-    return AgentTrajectoriesResponse(response)
+            msg.is_robot = (msg.id == robot_id)
+            response.radii.append(msg)
+    return response
 
 def agent_trajectories_server():
     rospy.init_node('radii_server')
